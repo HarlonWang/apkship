@@ -1,0 +1,27 @@
+# apkship 配置示例。密钥只能写成 ${环境变量名}，明文会被拒绝。
+# 相对路径按本文件所在目录解析。
+package: com.example.app
+
+stores:
+    huawei:
+        apk: out/huawei.apk
+        # 方式一：API 客户端（开发者中心 → 凭证 → API 客户端凭证）
+        clientId: ${HUAWEI_CLIENT_ID}
+        clientSecret: ${HUAWEI_CLIENT_SECRET}
+        # 方式二：Service Account，填凭证 JSON 文件路径（和方式一二选一）
+        # serviceAccountFile: ${HUAWEI_SERVICE_ACCOUNT_FILE}
+        # appId: "100000000"    # 可选，不填则按包名查询
+
+    xiaomi:
+        apk: out/xiaomi.apk
+        email: ${XIAOMI_EMAIL}              # 小米开发者站登录邮箱
+        privateKey: ${XIAOMI_PRIVATE_KEY}   # 自动发布接口的私钥
+        certFile: keys/xiaomi-public.cer    # 从小米后台下载的公钥证书
+        icon: store/icon-512.png            # 小米推送接口必传图标
+        privacyUrl: https://example.com/privacy
+        # appName: 示例应用     # 可选，不填则用小米上已有的应用名
+
+    oppo:
+        apk: out/oppo.apk
+        clientId: ${OPPO_CLIENT_ID}
+        clientSecret: ${OPPO_CLIENT_SECRET}

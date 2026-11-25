@@ -1,0 +1,32 @@
+{
+    "name": "apkship",
+    "version": "0.1.0",
+    "description": "把 APK 提交到国内应用商店（华为、小米、OPPO）的命令行工具",
+    "license": "Apache-2.0",
+    "type": "module",
+    "bin": {
+        "apkship": "dist/cli.js"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "engines": {
+        "node": ">=20"
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "test": "node --test test/*.test.ts",
+        "prepublishOnly": "npm run typecheck && npm test && npm run build"
+    },
+    "dependencies": {
+        "adbkit-apkreader": "^3.2.0",
+        "yaml": "^2.6.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.0.0",
+        "typescript": "^5.7.0"
+    }
+}
