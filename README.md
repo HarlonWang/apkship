@@ -127,3 +127,13 @@ npm run build
 ## 许可
 
 [Apache-2.0](LICENSE)
+
+## 发版
+
+改 `package.json` 的 `version`，提交后打同名 tag（不带 `v`）并推送，例如：
+
+```sh
+git tag 0.2.0 && git push origin 0.2.0
+```
+
+`Publish Release` workflow 会校验 tag 和 version 一致，跑类型检查、单测、构建后用 npm Trusted Publishing 发布，再建 GitHub Release。

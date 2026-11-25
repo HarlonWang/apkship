@@ -1,0 +1,47 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+
+jobs:
+  # 用 npm Trusted Publishing（OIDC）发布，不存 NPM_TOKEN；npmjs.com 上 apkship 的 Trusted Publisher 需指向本文件
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write   # gh release create 需要
+      id-token: write   # OIDC 换 npm 发布凭证
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24   # 自带 npm >= 11.5.1，OIDC 发布需要
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+
+      - name: Check version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "tag $GITHUB_REF_NAME 和 package.json 的 version $version 不一致" >&2
+            exit 1
+          fi
+
+      # prepublishOnly 会先跑类型检查、单测和构建
+      - name: Publish to npm
+        run: |
+          if npm view "apkship@$GITHUB_REF_NAME" version >/dev/null 2>&1; then
+            echo "apkship@$GITHUB_REF_NAME is already published"
+          else
+            npm publish --access public
+          fi
+
+      - name: Create GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
