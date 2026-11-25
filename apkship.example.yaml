@@ -25,6 +25,7 @@ stores:
         apk: out/oppo.apk
         clientId: ${OPPO_CLIENT_ID}
         clientSecret: ${OPPO_CLIENT_SECRET}
+        # summary: 一句话简介     # 可选，最多 13 个字；不填则沿用 OPPO 上现有的
 
     vivo:
         apk: out/vivo.apk

@@ -26,6 +26,9 @@ const TASK_SUCCESS = "2";
 const TASK_POLL_INTERVAL_MS = 5_000;
 const TASK_POLL_MAX_ATTEMPTS = 60;
 
+/** 一句话简介的字数上限（OPPO 接口错误码 800002） */
+const SUMMARY_MAX_CHARS = 13;
+
 /** 发布版本接口对普通应用必传、可从现网资料回填的字段 */
 const REQUIRED_PROFILE_FIELDS = [
     "app_name",
@@ -138,6 +141,15 @@ export class OppoStore implements Store {
             );
         }
 
+        // 先校验简介，免得传完 80 MB 的包才被接口拒
+        const summary = this.config.summary || String(profile.summary);
+        const summaryLength = [...summary].length;
+        if (summaryLength > SUMMARY_MAX_CHARS) {
+            throw new StoreError(
+                `OPPO 一句话简介最多 ${SUMMARY_MAX_CHARS} 个字，现在是 ${summaryLength} 个字：「${summary}」。请在配置的 oppo.summary 里填一句更短的`,
+            );
+        }
+
         ctx.log("获取上传地址");
         const uploadConfig = ensureOk(
             await ctx.http({
@@ -175,6 +187,7 @@ export class OppoStore implements Store {
         for (const key of OPTIONAL_PROFILE_FIELDS) {
             if (!isEmpty(profile[key])) business[key] = String(profile[key]);
         }
+        business.summary = summary;
 
         ctx.log("提交发布版本");
         ensureOk(

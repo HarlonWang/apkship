@@ -34,6 +34,8 @@ export interface OppoConfig {
     apk: string;
     clientId: string;
     clientSecret: string;
+    /** 一句话简介，OPPO 限 13 个字以内；不填则沿用现网的 */
+    summary?: string;
 }
 
 export interface VivoConfig {

@@ -103,6 +103,37 @@ test("submit：现网资料缺必传字段时，在上传前就报错", async ()
     assert.equal(requests.length, 2, "没有发起上传");
 });
 
+test("submit：现网简介超过 13 个字时，在上传前就报错并提示改配置", async () => {
+    const long = "示例应用为全球用户提供更快更安全的一站式服务";
+    const { http, requests } = mockHttp([
+        ["/developer/v1/token", { errno: 0, data: { access_token: "tok" } }],
+        ["/resource/v1/app/info", { errno: 0, data: { ...PROFILE, summary: long } }],
+    ]);
+    const store = new OppoStore(CONFIG);
+    const ctx = context(http, "unused.apk");
+    await store.check(ctx);
+    await assert.rejects(store.submit(ctx), /最多 13 个字，现在是 22 个字.*oppo\.summary/);
+    assert.ok(!requests.some((request) => request.url.includes("get-upload-url")), "不应开始上传");
+});
+
+test("submit：配置了 summary 时用配置的简介", async () => {
+    const apkPath = await tempFile("oppo.apk", "apk-content");
+    const { http, requests } = mockHttp([
+        ["/developer/v1/token", { errno: 0, data: { access_token: "tok" } }],
+        ["/resource/v1/app/info", { errno: 0, data: { ...PROFILE, summary: "示例应用为全球用户提供更快更安全的一站式服务" } }],
+        ["/upload/get-upload-url", { errno: 0, data: { upload_url: "https://upload.example/put", sign: "once" } }],
+        ["https://upload.example/put", { errno: 0, data: { url: "https://cdn/x.apk", md5: "abc" } }],
+        ["/resource/v1/app/upd", { errno: 0, data: { success: true } }],
+        ["/resource/v1/app/task-state", { errno: 0, data: { task_state: "2" } }],
+    ]);
+    const store = new OppoStore({ ...CONFIG, summary: "安全的跨境收款服务" });
+    const ctx = context(http, apkPath);
+    await store.check(ctx);
+    await store.submit(ctx);
+    const form = requests.find((request) => request.url.endsWith("/app/upd"))!.form!;
+    assert.equal(form.summary, "安全的跨境收款服务");
+});
+
 test("submit：异步任务失败时带出 OPPO 返回的原因", async () => {
     const apkPath = await tempFile("oppo.apk", "apk-content");
     const { http } = mockHttp([
