@@ -132,6 +132,33 @@ export class OppoStore implements Store {
         };
     }
 
+    /** 每个文件都要先取一次性 sign 再上传；type 取 apk / photo / resource */
+    private async upload(ctx: StoreContext, path: string, type: "apk" | "photo"): Promise<{ url: string; md5: string }> {
+        const uploadConfig = ensureOk(
+            await ctx.http({
+                url: `${API}/resource/v1/upload/get-upload-url`,
+                query: await this.signed(ctx, {}),
+            }),
+            "获取上传配置",
+        );
+        const blob = await openAsBlob(path);
+        ctx.log(`上传 ${basename(path)}（${(blob.size / 1024 / 1024).toFixed(1)} MB）`);
+        const form = new FormData();
+        form.set("type", type);
+        form.set("sign", String(uploadConfig.sign));
+        form.set("file", blob, basename(path));
+        const uploaded = ensureOk(
+            await ctx.http({
+                method: "POST",
+                url: String(uploadConfig.upload_url),
+                multipart: form,
+                timeoutMs: UPLOAD_TIMEOUT_MS,
+            }),
+            "上传文件",
+        );
+        return { url: String(uploaded.url), md5: String(uploaded.md5) };
+    }
+
     async submit(ctx: StoreContext): Promise<SubmitResult> {
         const profile = this.profile ?? {};
         const missing = REQUIRED_PROFILE_FIELDS.filter((key) => isEmpty(profile[key]));
@@ -150,29 +177,22 @@ export class OppoStore implements Store {
             );
         }
 
-        ctx.log("获取上传地址");
-        const uploadConfig = ensureOk(
-            await ctx.http({
-                url: `${API}/resource/v1/upload/get-upload-url`,
-                query: await this.signed(ctx, {}),
-            }),
-            "获取上传配置",
-        );
+        // 详情接口返回的图标和截图是 CDN 转出的 webp，发布接口只收 png/jpg，原样回填会被拒
+        if (!this.config.icon && isWebp(profile.icon_url)) {
+            throw new StoreError("OPPO 现网图标是 webp，发布接口只收 png，请在配置的 oppo.icon 里给一张 512×512 的 png");
+        }
+        if (!this.config.screenshots && String(profile.pic_url).split(",").some(isWebp)) {
+            throw new StoreError("OPPO 现网截图是 webp，发布接口只收 jpg/png，请在配置的 oppo.screenshots 里给截图文件");
+        }
 
-        ctx.log(`上传 ${basename(ctx.apkPath)}（${(ctx.apk.size / 1024 / 1024).toFixed(1)} MB）`);
-        const form = new FormData();
-        form.set("type", "apk");
-        form.set("sign", String(uploadConfig.sign));
-        form.set("file", await openAsBlob(ctx.apkPath), basename(ctx.apkPath));
-        const uploaded = ensureOk(
-            await ctx.http({
-                method: "POST",
-                url: String(uploadConfig.upload_url),
-                multipart: form,
-                timeoutMs: UPLOAD_TIMEOUT_MS,
-            }),
-            "上传文件",
-        );
+        const uploaded = await this.upload(ctx, ctx.apkPath, "apk");
+        const media: Record<string, string> = {};
+        if (this.config.icon) media.icon_url = (await this.upload(ctx, this.config.icon, "photo")).url;
+        if (this.config.screenshots) {
+            const urls: string[] = [];
+            for (const path of this.config.screenshots.split(",")) urls.push((await this.upload(ctx, path, "photo")).url);
+            media.pic_url = urls.join(",");
+        }
 
         const business: Record<string, string> = {
             pkg_name: ctx.packageName,
@@ -188,6 +208,7 @@ export class OppoStore implements Store {
             if (!isEmpty(profile[key])) business[key] = String(profile[key]);
         }
         business.summary = summary;
+        Object.assign(business, media);
 
         ctx.log("提交发布版本");
         ensureOk(
@@ -225,4 +246,8 @@ export class OppoStore implements Store {
 
 function isEmpty(value: unknown): boolean {
     return value === null || value === undefined || value === "";
+}
+
+function isWebp(url: unknown): boolean {
+    return typeof url === "string" && /\.webp($|\?)/i.test(url.trim());
 }

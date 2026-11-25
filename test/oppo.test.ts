@@ -134,6 +134,44 @@ test("submit：配置了 summary 时用配置的简介", async () => {
     assert.equal(form.summary, "安全的跨境收款服务");
 });
 
+test("submit：现网图标是 webp 且没配 icon 时，在上传前就报错", async () => {
+    const { http, requests } = mockHttp([
+        ["/developer/v1/token", { errno: 0, data: { access_token: "tok" } }],
+        ["/resource/v1/app/info", { errno: 0, data: { ...PROFILE, icon_url: "https://cdn/i.webp" } }],
+    ]);
+    const store = new OppoStore(CONFIG);
+    const ctx = context(http, "unused.apk");
+    await store.check(ctx);
+    await assert.rejects(store.submit(ctx), /oppo\.icon/);
+    assert.ok(!requests.some((request) => request.url.includes("get-upload-url")));
+});
+
+test("submit：配置了 icon 和 screenshots 时按 photo 上传并替换现网 webp", async () => {
+    const apkPath = await tempFile("oppo.apk", "apk-content");
+    const icon = await tempFile("icon.png", "png");
+    const shot1 = await tempFile("s1.jpg", "j1");
+    const shot2 = await tempFile("s2.jpg", "j2");
+    let n = 0;
+    const { http, requests } = mockHttp([
+        ["/developer/v1/token", { errno: 0, data: { access_token: "tok" } }],
+        ["/resource/v1/app/info", { errno: 0, data: { ...PROFILE, icon_url: "https://cdn/i.webp", pic_url: "https://cdn/1.webp,https://cdn/2.webp" } }],
+        ["/upload/get-upload-url", () => ({ errno: 0, data: { upload_url: "https://upload.example/put", sign: `s${++n}` } })],
+        ["https://upload.example/put", (request: any) => ({ errno: 0, data: { url: `https://cdn/up/${(request.multipart.get("file") as File).name}`, md5: "m" } })],
+        ["/resource/v1/app/upd", { errno: 0, data: { success: true } }],
+        ["/resource/v1/app/task-state", { errno: 0, data: { task_state: "2" } }],
+    ]);
+    const store = new OppoStore({ ...CONFIG, icon, screenshots: `${shot1},${shot2}` });
+    const ctx = context(http, apkPath);
+    await store.check(ctx);
+    await store.submit(ctx);
+    const uploads = requests.filter((request) => request.url === "https://upload.example/put");
+    assert.deepEqual(uploads.map((request) => request.multipart!.get("type")), ["apk", "photo", "photo", "photo"]);
+    assert.deepEqual(new Set(uploads.map((request) => request.multipart!.get("sign"))).size, 4, "每个文件各取一次 sign");
+    const form = requests.find((request) => request.url.endsWith("/app/upd"))!.form!;
+    assert.equal(form.icon_url, "https://cdn/up/icon.png");
+    assert.equal(form.pic_url, "https://cdn/up/s1.jpg,https://cdn/up/s2.jpg");
+});
+
 test("submit：异步任务失败时带出 OPPO 返回的原因", async () => {
     const apkPath = await tempFile("oppo.apk", "apk-content");
     const { http } = mockHttp([

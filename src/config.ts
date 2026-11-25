@@ -36,6 +36,10 @@ export interface OppoConfig {
     clientSecret: string;
     /** 一句话简介，OPPO 限 13 个字以内；不填则沿用现网的 */
     summary?: string;
+    /** 图标文件，512×512 png；不填则沿用现网的（现网是 webp 时发布接口会拒） */
+    icon?: string;
+    /** 竖版截图文件，jpg/png 1080×1920，多个用英文逗号分隔；不填则沿用现网的 */
+    screenshots?: string;
 }
 
 export interface VivoConfig {
@@ -160,7 +164,11 @@ export function parseConfig(
                 );
             }
             const expanded = expandEnv(textValue, where, env);
-            store[key] = PATH_FIELDS.includes(key) ? resolve(baseDir, expanded) : expanded;
+            if (key === "screenshots") {
+                store[key] = expanded.split(",").map((item) => resolve(baseDir, item.trim())).join(",");
+            } else {
+                store[key] = PATH_FIELDS.includes(key) ? resolve(baseDir, expanded) : expanded;
+            }
         }
 
         for (const key of REQUIRED_FIELDS[name]) {
