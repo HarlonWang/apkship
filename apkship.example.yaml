@@ -30,3 +30,9 @@ stores:
         apk: out/vivo.apk
         accessKey: ${VIVO_ACCESS_KEY}
         accessSecret: ${VIVO_ACCESS_SECRET}
+
+    honor:
+        apk: out/honor.apk
+        clientId: ${HONOR_CLIENT_ID}
+        clientSecret: ${HONOR_CLIENT_SECRET}
+        # appId: "100000000"    # 可选，不填则按包名查询

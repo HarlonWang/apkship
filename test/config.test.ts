@@ -56,8 +56,8 @@ test("华为要么给 API 客户端，要么给 Service Account", () => {
 });
 
 test("不认识的商店名直接报错", () => {
-    const text = "package: com.example.app\nstores:\n    honor:\n        apk: a.apk\n";
-    assert.throws(() => parseConfig(text, "/work", {}), /不支持的商店：honor/);
+    const text = "package: com.example.app\nstores:\n    samsung:\n        apk: a.apk\n";
+    assert.throws(() => parseConfig(text, "/work", {}), /不支持的商店：samsung/);
 });
 
 test("--only 只校验选中的商店，其他商店缺环境变量也不报错", () => {

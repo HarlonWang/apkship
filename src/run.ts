@@ -3,6 +3,7 @@ import type { ApkInfo } from "./apk.ts";
 import type { Config } from "./config.ts";
 import { STORE_NAMES } from "./config.ts";
 import type { Http } from "./http.ts";
+import { HonorStore } from "./stores/honor.ts";
 import { HuaweiStore } from "./stores/huawei.ts";
 import { OppoStore } from "./stores/oppo.ts";
 import type { RemoteState, Store, StoreContext, StoreName } from "./stores/types.ts";
@@ -46,6 +47,8 @@ export function createStore(name: StoreName, config: Config): Store {
             return new OppoStore(config.stores.oppo!);
         case "vivo":
             return new VivoStore(config.stores.vivo!);
+        case "honor":
+            return new HonorStore(config.stores.honor!);
     }
 }
 

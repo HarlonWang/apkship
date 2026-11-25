@@ -1,7 +1,7 @@
 {
     "name": "apkship",
     "version": "0.1.0",
-    "description": "把 APK 提交到国内应用商店（华为、小米、OPPO、vivo）的命令行工具",
+    "description": "把 APK 提交到国内应用商店（华为、小米、OPPO、vivo、荣耀）的命令行工具",
     "license": "Apache-2.0",
     "type": "module",
     "bin": {

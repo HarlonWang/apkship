@@ -42,6 +42,14 @@ export interface VivoConfig {
     accessSecret: string;
 }
 
+export interface HonorConfig {
+    apk: string;
+    clientId: string;
+    clientSecret: string;
+    /** 不填则按包名查询 */
+    appId?: string;
+}
+
 export interface Config {
     package: string;
     stores: {
@@ -49,6 +57,7 @@ export interface Config {
         xiaomi?: XiaomiConfig;
         oppo?: OppoConfig;
         vivo?: VivoConfig;
+        honor?: HonorConfig;
     };
 }
 
@@ -65,6 +74,7 @@ const SECRET_FIELDS: Record<StoreName, string[]> = {
     xiaomi: ["privateKey"],
     oppo: ["clientSecret"],
     vivo: ["accessSecret"],
+    honor: ["clientSecret"],
 };
 
 const REQUIRED_FIELDS: Record<StoreName, string[]> = {
@@ -72,6 +82,7 @@ const REQUIRED_FIELDS: Record<StoreName, string[]> = {
     xiaomi: ["apk", "email", "privateKey", "certFile", "icon", "privacyUrl"],
     oppo: ["apk", "clientId", "clientSecret"],
     vivo: ["apk", "accessKey", "accessSecret"],
+    honor: ["apk", "clientId", "clientSecret"],
 };
 
 /** 值是文件路径的字段，相对路径按配置文件所在目录解析 */
@@ -80,7 +91,7 @@ const PATH_FIELDS = ["apk", "serviceAccountFile", "certFile", "icon"];
 const ENV_REF = /\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g;
 const WHOLE_ENV_REF = /^\$\{[A-Za-z_][A-Za-z0-9_]*\}$/;
 
-export const STORE_NAMES: StoreName[] = ["huawei", "xiaomi", "oppo", "vivo"];
+export const STORE_NAMES: StoreName[] = ["huawei", "xiaomi", "oppo", "vivo", "honor"];
 
 function expandEnv(value: string, where: string, env: NodeJS.ProcessEnv): string {
     return value.replace(ENV_REF, (_, name: string) => {
