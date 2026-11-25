@@ -7,7 +7,7 @@ import { run } from "./run.ts";
 import type { Mode, StoreReport } from "./run.ts";
 import type { StoreName } from "./stores/types.ts";
 
-const USAGE = `apkship：把 APK 提交到国内应用商店（华为、小米、OPPO）
+const USAGE = `apkship：把 APK 提交到国内应用商店（华为、小米、OPPO、vivo）
 
 用法：
   apkship check  [选项]    只读：验证凭证、查应用、读线上版本
@@ -15,7 +15,7 @@ const USAGE = `apkship：把 APK 提交到国内应用商店（华为、小米�
 
 选项：
   -c, --config <文件>      配置文件，默认 apkship.yaml
-      --only <商店>        只处理指定商店，多个用逗号分隔（huawei,xiaomi,oppo）
+      --only <商店>        只处理指定商店，多个用逗号分隔（huawei,xiaomi,oppo,vivo）
   -n, --notes <文字>       更新说明（submit 必填，和 --notes-file 二选一）
       --notes-file <文件>  从文件读更新说明
       --dry-run            只做本地校验，不发任何网络请求

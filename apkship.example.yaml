@@ -25,3 +25,8 @@ stores:
         apk: out/oppo.apk
         clientId: ${OPPO_CLIENT_ID}
         clientSecret: ${OPPO_CLIENT_SECRET}
+
+    vivo:
+        apk: out/vivo.apk
+        accessKey: ${VIVO_ACCESS_KEY}
+        accessSecret: ${VIVO_ACCESS_SECRET}

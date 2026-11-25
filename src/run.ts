@@ -6,6 +6,7 @@ import type { Http } from "./http.ts";
 import { HuaweiStore } from "./stores/huawei.ts";
 import { OppoStore } from "./stores/oppo.ts";
 import type { RemoteState, Store, StoreContext, StoreName } from "./stores/types.ts";
+import { VivoStore } from "./stores/vivo.ts";
 import { XiaomiStore } from "./stores/xiaomi.ts";
 
 export type Mode = "check" | "submit";
@@ -43,6 +44,8 @@ export function createStore(name: StoreName, config: Config): Store {
             return new XiaomiStore(config.stores.xiaomi!);
         case "oppo":
             return new OppoStore(config.stores.oppo!);
+        case "vivo":
+            return new VivoStore(config.stores.vivo!);
     }
 }
 

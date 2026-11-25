@@ -1,7 +1,7 @@
 import type { ApkInfo } from "../apk.ts";
 import type { Http } from "../http.ts";
 
-export type StoreName = "huawei" | "xiaomi" | "oppo";
+export type StoreName = "huawei" | "xiaomi" | "oppo" | "vivo";
 
 /** 每次运行传给商店实现的上下文 */
 export interface StoreContext {
