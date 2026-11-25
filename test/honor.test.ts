@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
-import { HonorStore } from "../src/stores/honor.ts";
+import { extractObjectId, HonorStore } from "../src/stores/honor.ts";
 import { context, mockHttp, tempFile } from "./helpers.ts";
 
 const CONFIG = { apk: "", clientId: "cid", clientSecret: "csecret" };
@@ -88,7 +88,10 @@ test("submit：取上传地址、上传、写新版本特性、绑定应用包�
         ],
         setAll: 0,
     });
-    assert.deepEqual(byUrl("/update-file-info").json, { bindingFileList: [{ objectId: 9001 }] });
+    assert.equal(
+        new TextDecoder().decode(byUrl("/update-file-info").body),
+        '{"bindingFileList":[{"objectId":9001}]}',
+    );
     assert.deepEqual(byUrl("/submit-audit").json, {
         releaseType: 1,
         testAccount: "tester",
@@ -106,4 +109,12 @@ test("接口返回业务错误时带上荣耀的错误码", async () => {
         new HonorStore(CONFIG).check(context(http, "unused.apk")),
         /荣耀按包名查询应用失败：no permission（错误码 40001）/,
     );
+});
+
+test("objectId 超出 JS 数字精度时按原始文本取，位数不丢", () => {
+    const text = '{"code":0,"data":[{"fileName":"a.apk","objectId":2125573952465166337,"expireTime":1}]}';
+    assert.equal(JSON.parse(text).data[0].objectId, 2125573952465166300);
+    assert.equal(extractObjectId(text), "2125573952465166337");
+    assert.equal(extractObjectId('{"data":[{"objectId":"42"}]}'), "42");
+    assert.equal(extractObjectId('{"data":[]}'), undefined);
 });

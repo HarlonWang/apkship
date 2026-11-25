@@ -124,8 +124,7 @@ export class HonorStore implements Store {
         }
 
         ctx.log("获取上传地址");
-        const paths = ensureOk(
-            await ctx.http({
+        const pathsResponse = await ctx.http({
                 method: "POST",
                 url: `${API}/get-file-upload-url`,
                 headers,
@@ -138,11 +137,11 @@ export class HonorStore implements Store {
                         fileSha256: await hashFile(ctx.apkPath, "sha256"),
                     },
                 ],
-            }),
-            "获取应用文件上传路径",
-        );
-        const objectId: unknown = paths?.[0]?.objectId;
-        if (objectId === undefined || objectId === null) {
+            });
+        ensureOk(pathsResponse, "获取应用文件上传路径");
+        // objectId 是 19 位整数，超出 JS 数字精度，JSON.parse 后会被改写，只能从原始响应文本里按字符串取
+        const objectId = extractObjectId(pathsResponse.text);
+        if (!objectId) {
             throw new StoreError("荣耀获取上传路径的返回里没有 objectId");
         }
 
@@ -154,7 +153,7 @@ export class HonorStore implements Store {
                 method: "POST",
                 url: `${API}/file-upload`,
                 headers,
-                query: { appId, objectId: String(objectId) },
+                query: { appId, objectId },
                 multipart: form,
                 timeoutMs: UPLOAD_TIMEOUT_MS,
             }),
@@ -182,9 +181,10 @@ export class HonorStore implements Store {
             await ctx.http({
                 method: "POST",
                 url: `${API}/update-file-info`,
-                headers,
                 query: { appId },
-                json: { bindingFileList: [{ objectId }] },
+                // 同样为了保住 objectId 的精度，请求体手工拼，objectId 按数字原样写入
+                headers: { ...headers, "Content-Type": "application/json" },
+                body: new TextEncoder().encode(`{"bindingFileList":[{"objectId":${objectId}}]}`),
             }),
             "更新应用文件信息",
         );
@@ -209,4 +209,9 @@ export class HonorStore implements Store {
         );
         return { message: "已提交审核" };
     }
+}
+
+/** 从原始响应文本里取第一个 objectId，保留全部位数 */
+export function extractObjectId(text: string): string | undefined {
+    return /"objectId"\s*:\s*"?(\d+)"?/.exec(text)?.[1];
 }
