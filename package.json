@@ -3,6 +3,26 @@
     "version": "0.1.0",
     "description": "把 APK 提交到国内应用商店（华为、小米、OPPO、vivo、荣耀）的命令行工具",
     "license": "Apache-2.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/HarlonWang/apkship.git"
+    },
+    "homepage": "https://github.com/HarlonWang/apkship#readme",
+    "bugs": {
+        "url": "https://github.com/HarlonWang/apkship/issues"
+    },
+    "keywords": [
+        "apk",
+        "android",
+        "app-store",
+        "huawei",
+        "xiaomi",
+        "oppo",
+        "vivo",
+        "honor",
+        "publish",
+        "cli"
+    ],
     "type": "module",
     "bin": {
         "apkship": "dist/cli.js"
